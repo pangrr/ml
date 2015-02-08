@@ -1,0 +1,108 @@
+Name: Ran Pang
+
+Email: pangrr89@gmail.com
+
+Course: CSC446
+
+Homework:
+   Implement naive bayes with Dirichlet smoothing for the adult income dataset.
+   Plot classification error on the dev set as a function of alpha, and report
+   the performance of the best alpha on the test set. 
+
+
+************************       Files         ***********************************
+
+    naive_bayess_mooth.py:
+        The python script that finds the best alpha among given range.
+        Before running the script in an OS with GUI, please comment line 7
+        "matplotlib.use('Agg')", or the script will not generate a figure.
+        The directory where the script reads data is ../adult/
+    
+    README:
+        The text report.
+
+    figure: (need to renamed to figure.pdf to open)
+        The figure that shows the result.
+
+
+************************       Algorithm     ***********************************
+
+    INPUT: X_train, y_train, X_dev, y_dev, X_test, y_test, alpha[], 
+           number_of_processes
+
+    use training data to count c(xi=0, y=1), c(xi=0, y=-1),c(xi=1, y=1), c(xi=1,
+    y=-1), c(y=1), c(y=-1)
+
+    partition alpha[] into number_of_processes of subsets alpha[a[]]
+
+    for a in lamda[]
+        for row r in X_dev
+            p(y=1|X=X_dev[r]) = argmax(p(y=1) * product(p(xi = X_dev[r][i]|y=1)
+                ..p(xi=X_dev[r][i]|y=1)))
+            p(y=-1|X=X_dev[r]) = argmax(p(y=-1) * product(p(xi = X_dev[r][i]|
+                y=-1)..p(xi=X_dev[r][i]|y=-1)))
+            if p(y=1|X=X_dev[r]) >  p(y=-1|X=X_dev[r])
+                y_hat[r] = 1
+            else
+                y_hat[r] = -1
+
+        accuracy = accuracy(y_hat, y_dev)
+        if(accuracy > max_accuracy)
+            max_accuracy = accuracy
+            best_alpha = a
+
+    compute y_predict similarly as above
+
+    OUTPUT: accuracy(y_predict, y_test)
+
+
+*************************       Instructions     *******************************
+
+    python naive_bayes_smooth.py <min_alpha> <max_alpha> <number_of_alphas>  
+    <number_of_processes>
+
+    For example, if you want to find the best alpha from 1, 2, 3, ..., 100 using
+    2 processes, the command should be: 
+        python naive_bayes_smooth.py 1 100 100 2
+
+    If you want to find the best alpha from 0.1, 0.2, 0.3, ..., 100.0 using 50
+    processes the command should be: 
+        python naive_bayes_smooth.py 0.1 100.0 1000 50
+
+    NOTE: too many processes may cause trouble!
+
+
+***********************          Results       *********************************
+
+    To find the best alpha, I tested alpha values 0.1, 0.2, ... 1000.0.
+    The best alpha turns out to be 305.4 and the corresponding accuracy in
+    dev data prediction is 83.33%. The corresponding accuracy in test data
+    prediction is 83.13%.
+
+
+***********************      Interpretation    *********************************
+
+    Alpha is used in the naive bayes prediction model to prevent overwhelming by
+    cases like c(xi=1, y=1)=0 which make p(xi=1|y=1)=0 and in turn makes
+    p(y=1|X=Xi)=0.
+    The trend dipticted in the figure attached shows that on the dev data,
+    accuracy increases as alpha increases from 0.1 to around 200.0. Then
+    accuracy decreases as alpha increases from around 400.0 on. It seems that
+    there might be a global best alpha that maximize accuracy on dev data. This
+    mean we can always try to search for the best alpha in naive bayes
+    classification with smoothing.
+
+
+*************************      References      *********************************
+
+    Pattern Recognition and Machine Learning. Christopher M. Bishop
+    Machine learning lecture by Dan Gildea
+    Various sources of python coding instructions from the Internet
+
+    Special thanks to Jingwei Xu, Haoyuan Xiao for discussion and inspiration.
+    
+
+
+
+
+

@@ -1,0 +1,96 @@
+Name: Ran Pang
+
+Email: pangrr89@gmail.com
+
+Course: CSC446
+
+Homework:
+    Implement linear regression for the adult income dataset using Python. Data
+    available in /u/cs246/data/adult and /u/cs446/data/adult. Take the sign of
+    the output of linear regression as the predicted class label in order to
+    compute the accuracy of your classifier.
+
+************************       Files         ***********************************
+
+
+    linear_regress.py: the python script that finds the best lamda among given range 
+    
+    README
+
+************************       Algorithm     ***********************************
+
+    INPUT: X_train, y_train, X_dev, y_dev, X_test, y_test, lamda[], 
+    number_of_threads
+
+    partition lamdas[] into number_of_threads of subsets lamda[l[]]
+
+    for l in lamda[]
+        w = (X_train^t * X_train + l * I)^-1 * X_train^t * y_train
+        y_p = X_dev * w
+        acc = accuracy(y_p, y_dev)
+        if(acc > max_acc)
+            max_acc = acc
+            best_lamda = l
+            best_w = w
+
+    y_predict = X_test * best_w
+
+    OUTPUT: accuracy(y_predict, y_test)
+
+***********************      Instructions    ***********************************
+
+    python regress.py <min_lamda> <max_lamda> <number_of_lamda>  
+    <number_of_threads>
+
+    For example, if you want to find the best lamda from 1, 2, 3, ..., 100 using
+    2 threads, the command should be: 
+        python regress.py 1 100 100 2
+
+    If you want to find the best lamda from 0.1, 0.2, 0.3, ..., 100.0 using 50
+    threads the command should be: 
+        python regress.py 0.1 100.0 1000 50
+
+    NOTE: too many threads may cause trouble!
+
+***********************        Results       ***********************************
+
+    To find the best lamda, I tested lamda values 0.1, 0.2, ... 50000.0.
+    The best lamda turns out to be 81.2 and the corresponding accuracy in
+    dev data prediction is 84.9%. The corresponding accuracy in test data
+    prediction is 84.6%.
+
+***********************    Interpretation    ***********************************
+
+    Lamda is used in the linear regression model to prevent over-fitting by
+    restricting the value of w.
+    
+    Too large a lamda value is likely to result in poor-fitting, while too small
+    a lamda value is likely to result in over-fitting.
+
+    As far as I know there is no known predicting accuracy function on lamda.
+    It's not practical to set the goal as finding the best lamda since possible
+    lamda values include all positive real numbers. What's worse is that
+    we don't even know if prediction accuracy is a monotonous function of lamda 
+    in any given continuous interval of lamda value.
+    
+    Thus a more reasonable goal is to find a lamda that results in an 
+    acceptable predicting accuracy. As in this homework, we set the minimum
+    acceptable accuracy to 60%. We are fortunate enough to find a lamda within 
+    range of 0.1 to 5000.0 that produces an accuracy of 84.9% in dev data
+    prediction as well as an accuracy of 84.7% in test data prediction.
+
+***********************        References    ***********************************
+
+    Pattern Recognition and Machine Learning. Christopher M. Bishop
+    Machine learning lecture by Dan Gildea
+    Demo python codes by Xiaochang Peng
+    Various sources of python coding instructions from the Internet
+
+    Special thanks to Xinzhao Liu, Tianchi Zhao, Jingwei Xu, Yichi Zhang for
+    discussion and inspiration.
+    
+
+
+
+
+
