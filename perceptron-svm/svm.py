@@ -12,15 +12,14 @@ from multiprocessing import Process, Array, Value
 
 def readData(file, nfeat):
 	nline = len(open(file, 'r').readlines())
-	X = np.zeros([nline, nfeat + 1])
+	X = np.zeros([nline, nfeat])
 	y = np.zeros(nline)
 	i = 0
 	for line in open(file, 'r').readlines():
 		arr = line.strip().split()
 		y[i] = int(arr[0])
-		X[i][0] = 1
 		for feat in arr[1:]:
-			X[i][int(feat.split(':')[0])] = 1
+			X[i][int(feat.split(':')[0])-1] = 1
 		i += 1
 	return (X, y)
 
