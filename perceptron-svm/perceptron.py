@@ -6,7 +6,7 @@ from random import randint
 import argparse
 import matplotlib
 #plot without X window
-#matplotlib.use('Agg')
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
@@ -40,6 +40,7 @@ def train(X, y):
     max_acc = 0.0
 
     while it < n_iteration:
+
         n = randint(0, N-1)
 
         if np.dot(w, X[n]) * y[n] <= 0:
@@ -56,7 +57,7 @@ def train(X, y):
                 max_acc = acc
                 best_w = w
 
-    print('\nMax train accuracy %f' % (max_acc))
+    print('\nMax train accuracy\t%f' % (max_acc))
     return best_w
 
 
@@ -113,7 +114,7 @@ if __name__ == '__main__':
     w = train(X_t, y_t)
 
     # predict
-    print('Test accuracy\t%f' % predict(w, X_p, y_p))
+    print('Test accuracy\t\t%f' % predict(w, X_p, y_p))
 
 
     end_time = time.time()

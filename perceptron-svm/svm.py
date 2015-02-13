@@ -6,7 +6,7 @@ from random import randint
 import argparse
 import matplotlib
 #plot without X window
-#matplotlib.use('Agg')
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from multiprocessing import Process, Array, Value
 
