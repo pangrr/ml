@@ -1,12 +1,12 @@
-import numpy as np
 from __future__ import print_function
+import numpy as np
 import sys
 import time
 from random import randint
 import argparse
 import matplotlib
 #plot without X window
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
@@ -57,6 +57,7 @@ def train(X, y):
                 max_acc = acc
                 best_w = w
 
+    print('\nMax train accuracy %f' % (max_acc))
     return best_w
 
 
@@ -113,7 +114,7 @@ if __name__ == '__main__':
     w = train(X_t, y_t)
 
     # predict
-    print('\nTest accuracy\t%f' % predict(w, X_p, y_p))
+    print('Test accuracy\t%f' % predict(w, X_p, y_p))
 
 
     end_time = time.time()
