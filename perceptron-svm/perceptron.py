@@ -1,8 +1,13 @@
 import numpy as np
+from __future__ import print_function
 import sys
 import time
 from random import randint
 import argparse
+import matplotlib
+#plot without X window
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 
 
@@ -23,14 +28,18 @@ def readData(file, nfeat):
 
 
 
-def train(X, y, max_it):
+def train(X, y):
+    global n_iteration
+    global acc_arr
+
     w = np.zeros(X.shape[1])
     N = y.shape[0]
 
     it = 0
     acc = 0.0
+    max_acc = 0.0
 
-    while it < max_it:
+    while it < n_iteration:
 
         n = randint(0, N-1)
 
@@ -40,9 +49,15 @@ def train(X, y, max_it):
             w += 1/it * y[n] * X[n]
 
             acc = predict(w, X, y)
-            print('training...%d/%d\taccuracy=%f' % (it, max_it, acc), end='\r')
 
-    return w
+            acc_arr.append(acc)
+
+            print('Training...%d/%d\tTrain accuracy %f' % (it, n_iteration, acc), end='\r')
+            if acc > max_acc:
+                max_acc = acc
+                best_w = w
+
+    return best_w
 
 
 
@@ -77,10 +92,13 @@ if __name__ == '__main__':
 
     # read arguments
     parser = argparse.ArgumentParser(description='Perceptron Classifier')
-    parser.add_argument('-i', '--max_it', help='Maximum number of iterations', required=True)
+    parser.add_argument('-i', '--iterations', help='Number of iterations, default = 100')
     args = parser.parse_args()
 
-    max_it = int(args.max_it)
+    if args.iterations:
+        n_iteration = int(args.iterations)
+    else:
+        n_iteration = 100
 
 
 
@@ -89,18 +107,21 @@ if __name__ == '__main__':
     X_p, y_p = readData('a7a.test', 123)
 
 
+    acc_arr = []
 
     # train
-    w = train(X_t, y_t, max_it)
+    w = train(X_t, y_t)
 
     # predict
-    print('\ntest set accuracy = %f' % predict(w, X_p, y_p))
+    print('\nTest accuracy\t%f' % predict(w, X_p, y_p))
 
 
     end_time = time.time()
     print('%f seconds' % (end_time - start_time))
 
-
+    plt.plot(acc_arr)
+    plt.savefig('accuracy')
+    plt.show()
 
 
 
