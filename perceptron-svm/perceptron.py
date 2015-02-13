@@ -40,13 +40,12 @@ def train(X, y):
     max_acc = 0.0
 
     while it < n_iteration:
-
         n = randint(0, N-1)
 
         if np.dot(w, X[n]) * y[n] <= 0:
             it += 1
 
-            w += 1/it * y[n] * X[n]
+            w += 1.0/it * y[n] * X[n]
 
             acc = predict(w, X, y)
 
@@ -121,7 +120,7 @@ if __name__ == '__main__':
     print('%f seconds' % (end_time - start_time))
 
     plt.plot(acc_arr)
-    plt.savefig('accuracy')
+    plt.savefig('perceptron_acc')
     plt.show()
 
 

@@ -49,8 +49,8 @@ def train(X, y, c):
         if y[n] * (np.dot(w, X[n]) + b) < 1:
             it += 1
 
-            w -= 1/it * (w - c * y[n] * X[n])
-            b += 1/it * c * y[n]
+            w -= 1.0/it * (w - c * y[n] * X[n])
+            b += 1.0/it * c * y[n]
 
             acc = predict(w, b, X, y)
 
@@ -159,7 +159,7 @@ if __name__ == '__main__':
         print('%f seconds' % (end_time - start_time))
 
         plt.plot(acc_arr_single_c)
-        plt.savefig('accuracy')
+        plt.savefig('svm_acc')
         plt.show()
 
 
@@ -236,7 +236,7 @@ if __name__ == '__main__':
         # plot
         plt.plot(c_arr, acc_arr)
         plt.show()
-        plt.savefig('c-accuracy')
+        plt.savefig('c-acc')
 
 
 
