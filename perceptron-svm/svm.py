@@ -66,7 +66,7 @@ def train(X, y, c):
 
 
         else:
-            w -= 1/it * w
+            w -= 1.0/it * w
 
     if args.c:
         print('\nMax train accuracy\t%f' % (max_acc))
