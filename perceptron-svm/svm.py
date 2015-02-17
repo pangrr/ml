@@ -5,8 +5,7 @@ import time
 from random import randint
 import argparse
 import matplotlib
-#plot without X window
-matplotlib.use('Agg')
+#matplotlib.use('Agg') # comment this line to plot in OS with GUI
 import matplotlib.pyplot as plt
 from multiprocessing import Process, Array, Value
 
@@ -31,20 +30,19 @@ def readData(file, nfeat):
 
 def train(X, y, c):
     global n_iteration
-    global acc_arr_single_c
     global args
 
     w = np.zeros(X.shape[1])
-    b = 0
+    b = 0.0
+    acc_arr_single_c = []
 
     N = y.shape[0]
 
     it = 0
     acc = 0.0
-    max_acc = 0.0
 
     while it < n_iteration:
-        n = randint(0, N-1)
+        n = randint(0, N-1) # stochastic training
 
         if y[n] * (np.dot(w, X[n]) + b) < 1:
             it += 1
@@ -53,24 +51,17 @@ def train(X, y, c):
             b += 1.0/it * c * y[n]
 
             acc = predict(w, b, X, y)
+            acc_arr_single_c.append(acc)
 
-            if args.c:  # single c
-                acc_arr_single_c.append(acc)
+            # if we just test single c value
+            if args.c:
                 print('Training...%d/%d\tTrain accuracy %f' % (it, n_iteration, acc), end='\r')
-
-            # update max acc
-            if acc > max_acc:
-                max_acc = acc
-                best_w = w
-                best_b = b
 
 
         else:
             w -= 1.0/it * w
 
-    if args.c:
-        print('\nMax train accuracy\t%f' % (max_acc))
-    return (best_w, best_b)
+    return (w, b, acc_arr_single_c)
 
 
 
@@ -83,7 +74,7 @@ def predict(w, b, X, y):
 
 
 
-
+# compute accuracy given observed class and predicted class
 def accuracy(y, t):
 	match = 0.0
 	for i in range(y.shape[0]):
@@ -95,20 +86,24 @@ def accuracy(y, t):
 
 
 
-
-def testC(pid, c_arr, acc_arr, X_t, y_t, X_d, y_d, done):
+# a thread function to train on assigned c values and get dev accuracy
+def testC(pid, c_arr, acc_arr, var_arr, X_t, y_t, X_d, y_d, done):
     global n_c
     global n_process
 
     i = pid
     while i < len(c_arr):
-        w, b = train(X_t, y_t, c_arr[i])
+        w, b, acc_arr_single_c = train(X_t, y_t, c_arr[i])
         acc_arr[i] = predict(w, b, X_d, y_d)
+        var_arr[i] = np.var(acc_arr_single_c)
 
         done.value += 1
         print('testing C...%d/%d' % (done.value, n_c), end='\r')
 
         i += n_process
+
+
+
 
 
 
@@ -123,15 +118,19 @@ if __name__ == '__main__':
     X_p, y_p = readData('a7a.test', 123)
 
 
-    # read arguments
+    # set arguments options
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', type=float,  help='Value of C, if you want to see movement of accuracy over iterations on single C value')
-    parser.add_argument('-cm', '--min_c', type=float, help='Minimum value of C, default = 1.0')
-    parser.add_argument('-cx', '--max_c', type=float, help='Maximum value of C, default = 100.0')
-    parser.add_argument('-s', '--step_length', type=float, help='Step length of C, default = 1.0')
-    parser.add_argument('-p', '--processes', type=int,  help='Number of processes, default = 1')
-    parser.add_argument('-i', '--iterations', type=int, help='Number of iterations, default = 100')
+    parser.add_argument('-c', type=float,  help='value of C, if you want to see movement of accuracy over iterations on single C value')
+    parser.add_argument('-cm', '--min_c', type=float, help='minimum value of C, default = 1.0')
+    parser.add_argument('-cx', '--max_c', type=float, help='maximum value of C, default = 100.0')
+    parser.add_argument('-s', '--step_length', type=float, help='step length of C, default = 1.0')
+    parser.add_argument('-p', '--processes', type=int,  help='number of processes, default = 1')
+    parser.add_argument('-i', '--iterations', type=int, help='number of iterations, default = 100')
+    parser.add_argument('-t', '--test', type=str, help='assign a file of test data')
+
     args = parser.parse_args()
+
+
 
 
     if args.iterations:
@@ -142,30 +141,60 @@ if __name__ == '__main__':
 
 
 
-    # test accuracy move on single c value
+#############      test accuracy on single c value     ###############
     if args.c:
 
         c = float(args.c)
-        acc_arr_single_c = []
 
         # train
-        w, b = train(X_t, y_t, c)
-
-        # predict
-        print('Test accuracy\t\t%f' % predict(w, b, X_p, y_p))
+        w, b, acc_arr_single_c = train(X_t, y_t, c)
 
 
-        end_time = time.time()
-        print('%f seconds' % (end_time - start_time))
 
-        plt.plot(acc_arr_single_c)
-        plt.savefig('svm_acc')
-        plt.show()
+       ###################   test_data(data_file)      ####################
+        if args.test:
+            X_p, y_p = readData(args.test, 123)
+            t = np.dot(np.insert(X_p, X_p.shape[1], values=1, axis=1), np.insert(w, w.shape[0], values=b))
+
+            print("\nPredict on %d new test cases:" % y_p.shape[0])
+
+            for _t in t:
+                if _t > 0:
+                    print(1)
+                else:
+                    print(-1)
+
+            print("The accuracy on the new test case is: {0:.0f}%\n".format(accuracy(y_p, t)*100))
+       ##################   test_data(data_file)      #####################
 
 
-    # test accuracy vs. c values
+
+
+       ###########  test on default data and show accuracy movement  ##########
+        else:
+            # predict
+            print('\nTest accuracy\t\t%f' % predict(w, b, X_p, y_p))
+
+
+            end_time = time.time()
+            print('%f seconds' % (end_time - start_time))
+
+            # plot figure of accuracy movement over iterations
+            plt.plot(acc_arr_single_c)
+            plt.savefig('svm_converge')
+            plt.show()
+
+       ###########  test on default data and show accuracy movement  ##########
+
+
+
+
+
+
+
+################    test accuracy over c values   ####################
     else:
-
+        # read arguments
         if args.min_c:
             min_c = float(args.min_c)
         else:
@@ -186,20 +215,21 @@ if __name__ == '__main__':
         else:
             step_len = 1.0
 
-
-        n_c = int((max_c - min_c) / step_len) + 1
-        done = Value('i', 0)
-        c_arr = Array('d', n_c)
+        # initialize variables
+        n_c = int((max_c - min_c) / step_len) + 1 # number of c values to test
+        done = Value('i', 0) # just a counter of how many c values has been tested
+        c_arr = Array('d', n_c) # list of c values
         for i in range(n_c):
             c_arr[i] = min_c + step_len * i
-        acc_arr = Array('d', n_c)
+        acc_arr = Array('d', n_c) # dev max accuracies over c
+        var_arr = Array('d', n_c) # dev accuracy variations over c
 
 
 
         # launch processe
         p_arr = []
         for pid in range(n_process):
-            p = Process(target=testC, args=(pid, c_arr, acc_arr, X_t, y_t, X_d, y_d, done))
+            p = Process(target=testC, args=(pid, c_arr, acc_arr, var_arr, X_t, y_t, X_d, y_d, done))
             p_arr.append(p)
             p.start()
 
@@ -223,21 +253,51 @@ if __name__ == '__main__':
                 worst_c = c_arr[i]
 
 
-        # predict test data
-        w, b = train(X_t, y_t, best_c)
-        acc = predict(w, b, X_p, y_p)
+       ###################   test_data(data_file)      ####################
+        if args.test:
+            X_p, y_p = readData(args.test, 123)
+            w, b, acc_arr_single_c = train(X_t, y_t, best_c)
+            t = np.dot(np.insert(X_p, X_p.shape[1], values=1, axis=1), np.insert(w, w.shape[0], values=b))
 
-        print('\nBest C value\t\t%.3f\nMax dev accuracy\t%f\nWorst C value\t\t%.3f\nMin dev accuracy\t%f\nTest accuracy\t\t%f' % (best_c, max_acc, worst_c, min_acc, acc))
+            print('\nBest C value\t\t%.3f\nMax dev accuracy\t%f\nWorst C value\t\t%.3f\nMin dev accuracy\t%f' % (best_c, max_acc, worst_c, min_acc))
+            print("\nPredict on %d new test cases:" % y_p.shape[0])
+
+            for _t in t:
+                if _t > 0:
+                    print(1)
+                else:
+                    print(-1)
+
+            print("The accuracy on the new test case is: {0:.0f}%\n".format(accuracy(y_p, t)*100))
+       ##################   test_data(data_file)      #####################
 
 
-        end_time = time.time()
-        print('%f seconds' % (end_time - start_time))
 
-        # plot
-        plt.plot(c_arr, acc_arr)
-        plt.show()
-        plt.savefig('c-acc')
 
+
+       ###########  test on default data and show accuracy over c values ######
+        else:
+            # predict test data
+            w, b, acc_arr_single_c = train(X_t, y_t, best_c)
+            acc = predict(w, b, X_p, y_p)
+
+            print('\nBest C value\t\t%.3f\nMax dev accuracy\t%f\nWorst C value\t\t%.3f\nMin dev accuracy\t%f\nTest accuracy\t\t%f' % (best_c, max_acc, worst_c, min_acc, acc))
+
+
+            end_time = time.time()
+            print('%f seconds\n' % (end_time - start_time))
+
+            # plot dev accuracy over c values
+            plt.plot(c_arr, acc_arr)
+            plt.show()
+            plt.savefig('accuracy-c')
+            # plot dev accuracy variance over c values
+            plt.clf()
+            plt.plot(c_arr, var_arr)
+            plt.show()
+            plt.savefig("variance-c")
+
+       #########   test on default data and show accuracy over c values  ######
 
 
 

@@ -1,0 +1,188 @@
+Name: Ran Pang
+
+Email: pangrr89@gmail.com
+
+Course: CSC446
+
+Homework:
+    Implement perceptron and SVM for the adult income dataset. Report how
+    performance on dev varies as a function of C, and how perceptron and
+    SVM compare.
+
+
+************************       Files         ***********************************
+
+    perceptron.py
+        The python script that use perceptron to train on a7a.train and test
+        on the given test data (default a7a.test). This script will generate
+        a figure that plot the movement of accuracy over the training process.
+
+    svm.py
+        The python script that use svm to train on a7a.train. 
+        
+        If given a value of c, a test is performed on a7a.test, and a figure
+        of accuracy movement over the training process is generated.
+        
+        Otherwise values of c is tuned on a7a.dev and the c value with the 
+        highest accuracy on a7a.dev is chosen to test on the given test file.
+        
+        A figure of highest accuracy on dev data over values of c is generated.
+        In addition, variance of accuracy over the training process on each c
+        value is computed and dipicted in a figure.
+        
+     ---------------------------    Note    --------------------------------
+    - Before running these script in an OS WITHOUT GUI (such as the         -
+    - school's server), please uncomment line 8 to plot figures properly.   -
+    -                                                                       -
+    - Data files a7a.train a7a.dev a7a.test should be in the same directory -
+    - as the script.                                                        -
+     -----------------------------------------------------------------------
+    
+    README
+        The text report. (The file you are reading now.)
+        
+        
+
+
+     ---------------------------    Note    --------------------------------
+    - Files below are png images which might require adding suffix .png     -
+    - before open                                                           -
+     -----------------------------------------------------------------------
+
+    perceptron_converge
+        Figure of the movement of accuracy on training data during the
+        training process in perceptron.
+        
+    svm_converge001 - svm_converge100
+        Figures of the movement of accuracy on training data during the
+        training process in svm where c = 0.01, 0.1, 1, 10, 100
+    
+    accuracy-c_001-1
+        Figure of accuracy on development data over different c values
+        from 0.01 to 1 in svm.
+
+    accuracy-c_1-500
+        Figure of accuracy on development data over different c values
+        from 1 to 500 in svm.
+    
+    variance-c_001-1
+        Figure of the variance of accuracy on training data over defferent
+        c values from 0.01 to 1 in svm.
+
+    variance-c_1-500
+        Figure of the variance of accuracy on training data over defferent
+        c values from 1 to 500 in svm.
+
+
+
+************************       Algorithms     ***********************************
+
+
+    ----------------------------  Perceptron  ----------------------------
+
+    INPUT: X_train, y_train, X_test, y_test, n_iteration
+        w = [0..0]
+        for i in range(n_iteration)
+            n = random_row
+            if y_train[n] * (w * X_train[n]) <= 0
+                w += 1/i * y_train[n] * X_train[n]
+        y_predict = w * X_test
+    OUTPUT: accuracy(y_predict, y_test)
+
+
+
+    ----------------------------    SVM  ---------------------------------
+
+    INPUT: X_train, y_train, X_dev, y_dev, X_test, y_test, n_iteration, c_array
+        best_dev_acc = 0
+        best_c = c_array[0]
+        for c in c_array
+            w = [0..0]
+            b = 0
+            for i in range(n_iteration)
+                n = random_row
+                if y_train[n] * (w * X_train[n] + b) < 1
+                    w -= 1/i * (w - c * y_train[n] * X_train[n])
+                    b += 1/i * c * y_tain[n]
+            y_predict = w * X_test + b
+            acc = accuracy(y_predict, y_dev)
+            if acc > best_dev_acc
+                best_dev_acc = acc
+                best_c = c
+
+    OUTPUT: predict(X_test, y_test, best_c)
+
+
+
+*************************       Instructions     *******************************
+    
+    Please use "perceptron.py -h" and "svm.py -h" first to know how to use the 
+    scripts.
+    
+    NOTE: too many processes may cause trouble!
+
+
+***********************          Results       *********************************
+    
+    Convergence of training accuracy:
+        Under perceptron,  accuracy on training data converges relatively
+        fast (usually within about 30 times of modifications of w). 
+        (See figure "perceptron_converge")
+        
+        Under svm, accuracy on training data converges slower than that under 
+        perceptron. Bigger value of c tend to result in slower convergence.
+        (See figures "svm_converge001" through "svm_converge100")
+
+ 
+    Training accuracy:
+        Both perceptron and svm(under defferent c values) converge to a
+        relatively high accuracy on training data(approximately 0.8).
+
+
+    Testing accuracy:
+        Perceptron enjoys a rather high accuracy of about 0.8 on test data.
+        
+        Svm also enjoys a rather high accuracy. For c values from 0.01 to 1
+        the accuracy on test data is about 0.75, while that for c values 
+        from 1 to 500 is about 0.81.
+        c value seems have no significant impact on the test data accuracy.    
+    
+    
+
+***********************      Interpretation    *********************************
+    
+    Different c values affect the behavior of svm. Too big c value makes it
+    longer for svm to converge in training, while too small a c value makes it
+    too fast for svm to converge which means a large number of observed data 
+    ending up not been used by training.
+    
+    It seems that the way svm converges is more similar to the way perceptron
+    converges when c is around 1.
+
+    In this simple experiment, svm is much slower in terms of execution time
+    than perceptron, while the two exhibit not significant difference in the 
+    final accuracy on the test data.
+
+    Theoretically, the ability to accept certain level of misclassification
+    along with the purpose of maximize classification margin with tunable c
+    makes svm more flexible in applications.
+
+    
+
+*************************      References      *********************************
+
+    Pattern Recognition and Machine Learning. Christopher M. Bishop
+    Machine learning lecture by Dan Gildea
+    Various sources of python coding instructions from the Internet
+
+    Thanks Dan and Xiaochang for the clarification on the algorithms.
+
+    As always thanks those dear classmates including Jingwei Xu, Haoyuan Xiao,
+    Lin Wang, Xinzhao Liu, Tianchi Zhao for discussion, notification and 
+    inspiration.
+    
+
+
+
+
+

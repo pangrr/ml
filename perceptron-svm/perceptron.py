@@ -5,8 +5,7 @@ import time
 from random import randint
 import argparse
 import matplotlib
-#plot without X window
-matplotlib.use('Agg')
+#matplotlib.use('Agg') #comment this line to plot in OS with GUI
 import matplotlib.pyplot as plt
 
 
@@ -37,11 +36,9 @@ def train(X, y):
 
     it = 0
     acc = 0.0
-    max_acc = 0.0
 
     while it < n_iteration:
-
-        n = randint(0, N-1)
+        n = randint(0, N-1) # stochastic training
 
         if np.dot(w, X[n]) * y[n] <= 0:
             it += 1
@@ -53,12 +50,8 @@ def train(X, y):
             acc_arr.append(acc)
 
             print('Training...%d/%d\tTrain accuracy %f' % (it, n_iteration, acc), end='\r')
-            if acc > max_acc:
-                max_acc = acc
-                best_w = w
 
-    print('\nMax train accuracy\t%f' % (max_acc))
-    return best_w
+    return w
 
 
 
@@ -89,11 +82,13 @@ def accuracy(y, t):
 if __name__ == '__main__':
 
     start_time = time.time()
+    print()
 
 
     # read arguments
     parser = argparse.ArgumentParser(description='Perceptron Classifier')
-    parser.add_argument('-i', '--iterations', help='Number of iterations, default = 100')
+    parser.add_argument('-i', '--iterations', help='number of iterations, default = 100')
+    parser.add_argument('-t', '--test', type=str, help='assign a file of test data')
     args = parser.parse_args()
 
     if args.iterations:
@@ -113,18 +108,42 @@ if __name__ == '__main__':
     # train
     w = train(X_t, y_t)
 
-    # predict
-    print('Test accuracy\t\t%f' % predict(w, X_p, y_p))
+
+   ###################   test_data(data_file)      ####################
+    if args.test:
+        X_p, y_p = readData(args.test, 123)
+        t = np.dot(X_p, w)
+
+        print("\nPredict on %d new test cases:" % y_p.shape[0])
+
+        for _t in t:
+            if _t > 0:
+                print(1)
+            else:
+                print(-1)
+
+        print("The accuracy on the new test case is: {0:.0f}%\n".format(accuracy(y_p, t)*100))
+   ##################   test_data(data_file)      #####################
 
 
-    end_time = time.time()
-    print('%f seconds' % (end_time - start_time))
-
-    plt.plot(acc_arr)
-    plt.savefig('perceptron_acc')
-    plt.show()
 
 
+   ###########  test on default data and show accuracy movement  ##########
+    else:
+        # predict
+        print('\nTest accuracy\t%f' % predict(w, X_p, y_p))
+
+
+        end_time = time.time()
+        print('%f seconds\n' % (end_time - start_time))
+
+
+        # plot figure of accuracy movement over iteration
+        plt.plot(acc_arr)
+        plt.savefig('perceptron_converge')
+        plt.show()
+
+   ###########  test default data and show accuracy movement  ##########
 
 
 
