@@ -1,17 +1,14 @@
 # em4gmm.py
 # Implement Expectation Maximization Algorithm for Gaussian Mixture Models.
 
+from __future__ import print_function
 import numpy as np
 from numpy import linalg
 import math
 import random
 import matplotlib
-#matplotlib.use('Agg') # Comment this line to plot in OS with GUI
+matplotlib.use('Agg') # Comment this line to plot in OS with GUI
 import matplotlib.pyplot as plt
-import time
-
-
-
 
 
 
@@ -34,7 +31,7 @@ class Sample:
         r = 0
         for line in open (file, 'r').readlines ():
             dataPoint = line.split ()
-            for c in range (0, self.nDim):
+            for c in range (self.nDim):
                 self.data[r][c] = float (dataPoint[c])
             r += 1
 
@@ -89,15 +86,30 @@ class GMM:
 
 
     # Initialize the GMM by generating its components.
-    def __init__ (self, sample, nComp, maxIt):
-        self.maxIt = maxIt  # Maximum number of iterations for EM training.
-        self.sample = sample    # Sample data for EM training.
-        self.nDim = sample.nDim  # Number of dimensions.
-        self.nComp = nComp  # Number of components.
-        self.resp = np.zeros([sample.nData, nComp])  # A matrix of responsibilities computed and updated at every E step
-        self.comp = []  # A list of Gaussian Distributions.# A list of log likelihood growing during EM training.
-        self.converge = False   # Boolean value whether the log likelihood converges before reaching the maximum number of iterations for EM training
-        self.hisLike = [] # A list of log likelihood growing at each iteration of EM training.
+    def __init__ (self, trainData, devData, nComp, maxIt, covType):
+        # Type of covariance matrix.
+        # Possible values: "tied" "separate".
+        self.covType = covType
+        # Maximum number of iterations for EM training.
+        self.maxIt = maxIt
+        # Training data for EM training.
+        self.trainData = trainData
+        # Developing data.
+        self.devData = devData
+        # Number of dimensions.
+        self.nDim = trainData.nDim
+        # Number of components.
+        self.nComp = nComp
+        # A matrix of responsibilities computed and updated at every E step
+        self.resp = np.zeros([trainData.nData, nComp])
+        # A list of Gaussian Distributions.# A list of log likelihood growing during EM training.
+        self.comp = []
+        # Boolean value whether the log likelihood converges before reaching the maximum number of iterations for EM training
+        self.converge = False
+        # A list of log likelihood on training data computed for each iteration of EM training.
+        self.trainLike = []
+        # A list of log likelihood on developing data computed for each iteration of EM training.
+        self.devLike = []
 
         self.initPara ()
 
@@ -105,14 +117,14 @@ class GMM:
 
     # Initialize parameters for each component.
     # Select nComp random data points as the initial mean for each component..
-    # Select the covariance of the whole sample as the covariance for each component.
+    # Select the covariance of the whole training data as the covariance for each component.
     def initPara (self):
         randData = self.randData ()
-        sampleCov = self.sampleCov ()
+        initCov = self.initCov ()
         initMix = 1.0 / self.nComp
 
-        for k in range (0, self.nComp):
-            gauss = Gauss (self.nDim, randData[k], sampleCov, initMix)
+        for k in range (self.nComp):
+            gauss = Gauss (self.nDim, randData[k], initCov, initMix)
             self.comp.append (gauss)
 
 
@@ -122,16 +134,17 @@ class GMM:
 
     ######## EM training function #########
     def train (self):
-        for i in range (0, self.maxIt):
-            print ("Training...%d/%d" % (i+1, self.maxIt), end = "\r")
+        for i in range (self.maxIt):
+            print ("Training...%d/%d" % (i+1, self.maxIt), end="\r")
 
             self.Estep ()
             self.Mstep ()
             self.like ()
-            if self.isConverge (10, 1):
-                self.converge = True
-                break
+#            if self.isConverge (10, 1):
+#                self.converge = True
+#                break
             self.updatePara ()
+        print ()
 
 
 
@@ -148,10 +161,10 @@ class GMM:
 
     # Compute all responsibilities. i.e. E step.
     def Estep (self):
-        for n in range (0, self.sample.nData):
-            dataPoint = self.sample.data[n]
+        for n in range (self.trainData.nData):
+            dataPoint = self.trainData.data[n]
 
-            for k in range (0, self.nComp):
+            for k in range (self.nComp):
                 self.resp[n][k] = self.response (dataPoint, k)
 
 
@@ -161,28 +174,45 @@ class GMM:
 
     # Compute and save new parameter values for all components given responsibilities. i.e. M step.
     def Mstep (self):
-        for k in range (0, self.nComp):
+        for k in range (self.nComp):
             self.pop (k)
             self.newMean (k)
-            self.newCov (k)
+            if self.covType == "tied":
+            # Tied covariance matrix as the covariance matrix of the whole training data remains unchanged.
+                a = 1   # Nothing useful.
+            elif self.covType == "separate":
+                self.newCov (k)
+            else:
+                print ("Error: " + self.covType + " is not a supported covariance matrix type.")
+                sys.exit (0)
             self.newMix (k)
 
 
 
 
 
-    # Compute the log likelihood based on the new parameters.
-    # Add the new log likelihood to the list.
+    # Compute the log likelihood on training data and developing data based on the new parameters.
+    # Add the new log likelihood to the lists.
     def like (self):
+        # Training data.
         like = 0.0
-        for dataPoint in self.sample.data:
+        for dataPoint in self.trainData.data:
             log = 0.0
             for gauss in self.comp:
                 log += gauss.mix * gauss.prob (dataPoint)
 
             like += math.log (log)
+        self.trainLike.append (like)
 
-        self.hisLike.append (like)
+        # Developing data.
+        like = 0.0
+        for dataPoint in self.devData.data:
+            log = 0.0
+            for gauss in self.comp:
+                log += gauss.mix * gauss.prob (dataPoint)
+
+            like += math.log (log)
+        self.devLike.append (like)
 
 
 
@@ -192,8 +222,8 @@ class GMM:
     # Test log likelihood convergence by computing the variance of the last given number of log likelihood values.
     # Converge if the variance is less than the given threshold.
     def isConverge (self, n, e):
-        l = len (self.hisLike)
-        if l < n or np.var (self.hisLike[l-n: l+1]) > e:
+        l = len (self.trainLike)
+        if l < n or np.var (self.trainLike[l-n: l+1]) > e:
             return False
         else:
             return True
@@ -213,7 +243,7 @@ class GMM:
     def response (self, dataPoint, k):
         deno = 0.0
 
-        for j in range (0, self.nComp):
+        for j in range (self.nComp):
             jgauss = self.comp[j]
             deno += jgauss.mix * jgauss.prob (dataPoint)
 
@@ -225,39 +255,43 @@ class GMM:
 
 
 
-    # Compute and update the population of the given component. Used in M step.
+    # Compute and update the population of the given component.
+    # Used in M step.
     def pop (self, k):
         gauss = self.comp[k]
         gauss.pop = 0
-        for n in range (0, self.sample.nData):
+        for n in range (self.trainData.nData):
             gauss.pop += self.resp[n][k]
 
 
-    # Compute and save the new means for the given component. Used in M step.
+    # Compute and save the new means for the given component.
+    # Used in M step.
     def newMean (self, k):
         gauss = self.comp[k]
         gauss.newMean = np.zeros (self.nDim)
-        for n in range (0, self.sample.nData):
-            gauss.newMean += self.resp[n][k] * self.sample.data[n]
+        for n in range (self.trainData.nData):
+            gauss.newMean += self.resp[n][k] * self.trainData.data[n]
         gauss.newMean /= gauss.pop
 
 
-    # Compute and save the new covariances for the given component. Used in M step.
+    # Compute and save the new covariances for the given component.
+    # Used in M step.
     def newCov (self, k):
         gauss = self.comp[k]
         gauss.newCov = np.zeros ([self.nDim, self.nDim])
-        for n in range (0, self.sample.nData):
-            dataPoint = self.sample.data[n]
+        for n in range (self.trainData.nData):
+            dataPoint = self.trainData.data[n]
             gauss.newCov += self.resp[n][k] * np.outer((dataPoint-gauss.newMean), (dataPoint-gauss.newMean))
         gauss.newCov /= gauss.pop
 
 
 
 
-    # Compute and save the new mixing coefficient for the given component, Used in M step.
+    # Compute and save the new mixing coefficient for the given component.
+    # Used in M step.
     def newMix (self, k):
         gauss = self.comp[k]
-        gauss.newMix = gauss.pop / self.sample.nData
+        gauss.newMix = gauss.pop / self.trainData.nData
 
 
 
@@ -268,65 +302,63 @@ class GMM:
 
 
 
-    # Select and return nComp random data points from the sample.
+    # Select and return nComp random data points from the training data.
     def randData (self):
         select = []
-        for i in range (0, self.nComp):
-            select.append (self.sample.data[random.randint (0, self.sample.nData)])
+        for i in range (self.nComp):
+            select.append (self.trainData.data[random.randint (0, self.trainData.nData-1)])
         return select
 
 
-    # Compute and return the covariance of the whole sample.
-    def sampleCov (self):
-        return np.cov (self.sample.data.T)
+    # Compute and return the covariance of the whole training data.
+    def initCov (self):
+        return np.cov (self.trainData.data.T)
 
 
 
 
 
 
+# Plot the log likelihood of train data and dev data over iterations for GMMs of different number of components for both tied and separate convariance matrices.
 
-
-# Plot the log likelihood of the trained GMMs of different number of components.
-def testNComp (sample, minNComp, maxNComp, maxIt):
+def test (trainData, devData, minNComp, maxNComp, maxIt):
     nComps = list (range(minNComp, maxNComp+1))
-    likes = []  # Store the log likelihood of the trained GMMs of different number of components.
 
     for nComp in range (minNComp, maxNComp+1):
-        print ("\nTesting...%d/%d" % (nComp, maxNComp-minNComp+1))
-        gmm = GMM (sample, nComp, maxIt)
-        gmm.train ()
-        likes.append (gmm.hisLike[-1])
+        print ("\nTesting...%d/%d" % (nComp-minNComp+1, maxNComp-minNComp+1))
+        gmmTie = GMM (trainData, devData, nComp, maxIt, "tied")
+        gmmTie.train ()
 
-    # Plot.
-    plt.plot (nComps, likes)
-    plt.show ()
+        gmmSep = GMM (trainData, devData, nComp, maxIt, "separate")
+        gmmSep.train ()
+
+        plt.plot (gmmTie.trainLike, label="tied train")
+        plt.plot (gmmSep.trainLike, label="separate train")
+        plt.legend (loc="best")
+        plt.savefig (str(nComp)+"_train")
+        plt.clf ()
+
+
+        plt.plot (gmmTie.devLike, label="tied dev")
+        plt.plot (gmmSep.devLike, label="seperate dev")
+        plt.legend (loc="best")
+        plt.savefig (str(nComp)+"_dev")
+        plt.clf ()
 
 
 
-# Plot the path of log likelihood during the training of a GMM
-def trainGMM (sample, nComp, maxIt):
-    print ("Initializing model...", end="")
-    gmm = GMM (sample, 5, 100)
+
+if __name__ == "__main__":
+    print ("Reading data...", end="")
+    trainData = Sample ("train.dat")
+    devData = Sample ("dev.dat")
     print ("Done.")
-    gmm.train ()
-
-
-    if gmm.converge:
-        print ("\nConverge.")
-    else:
-        print ("\nNot converge.")
-
-    # Plot
-    plt.plot (gmm.hisLike)
-    plt.show ()
+    test (trainData, devData, 1, 5, 20)
 
 
 
 
 
-if __name__ == '__main__':
-    print ("Reading sample...", end="")
-    sample = Sample ('points.dat')
-    print ("Done.")
-    testNComp (sample, 1, 10, 100)
+
+
+

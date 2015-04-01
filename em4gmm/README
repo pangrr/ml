@@ -1,0 +1,112 @@
+Name: Ran Pang
+
+Email: pangrr89@gmail.com
+
+Course: CSC446
+
+Homework:
+    Implement EM fitting of a mixture of gaussians on the two-dimensional data
+    set points.dat. You should try different numbers of mixtures, as well as 
+    tied vs. separate covariance matrices for each gaussian. OR Implement EM 
+    fitting of the aspect model on the discrete data set pairs.dat. You should 
+    try different numbers of mixtures.
+    IN EITHER CASE Use the final 1/10 of the data for dev. Plot likelihood on 
+    train and dev vs iteration for different numbers of mixtures.
+
+
+************************       Files         ***********************************
+
+    em4gmm.py
+        Please use "em4gmm.py -h" first to know how to use the script.
+        
+    train.dat
+        
+    dev.dat
+
+    README
+        
+    figures
+        A folder of figures of the experiment results.
+
+
+************************       Algorithm     **********************************
+
+
+    ---------------------------- EM for GMMs   ----------------------------
+
+    INPUT: train data of N data points, number of clusters K, number of 
+           iterations.
+
+        1. Initialize the parameters of the trained GMM 
+           in the following way:
+           
+           K random data points are chosen to be the means of each cluster;
+           
+           Compute the covariance matrix of the train data set as the
+           covariance matrices for each cluster;
+
+           1/K as the mixing coefficient for each cluster.
+
+        2. For the number of iterations:
+           
+           2.1 Compute the responsibility for each data point on each cluster.
+
+           2.2 Compute new means, covariance matrix (for separate covariance 
+               matrices), mixing coefficient for each cluster.
+
+           2.3 Compute the log likelihood for the training data on the updated
+               GMM.
+            
+    OUTPUT: Parameters of the trained Gaussian mixture model.
+
+
+
+
+***********************          Results       *********************************
+    
+    Number of clusters from 1 to 48 were tested on 20 iterations. Tied and 
+    separate covariance matrices were tested independently. Log likelihood of 
+    both train data and dev data were plotted.
+
+    Covergence:
+        In all cases, log likelihood converges within about 10 iterations. 
+        More clusters make it slower to converge than less clusters.
+
+    Likelihood:
+        GMM with separate covariance matrices has higher log likelihood than GMM
+        with tied covariance matrix, other parameters identical. The difference
+        between the two becomes bigger as the number of clusters increase. The 
+        converged log likelihood increases from 1 cluster to 3 clusters and 
+        remain largely unchanged.
+    
+
+
+***********************      Interpretation    *********************************
+    
+    A few more than one cluster can better fit the training data much in a way
+    similar to that more features fit better the training data. Many clusters
+    may overfit the data but doesn't decrease the converged likelihood on the dev
+    data. Separate covariance matrices makes a GMM better fit the training data 
+    than a tied covariance matrix, because it puts less restraints on the GMMs 
+    to be trained.
+
+    Besides the speed of convergence and relative log likelihood on the training
+    data as well as on the dev data, I wonder how to measure the goodness of one
+    GMM in an absolute sense.
+
+
+    
+*************************      References      *********************************
+
+    Pattern Recognition and Machine Learning. Christopher M. Bishop
+    Various sources of python coding instructions from the Internet
+
+    Thanks those dear classmates including Haoyuan Xiao, Lin Wang, Xinzhao Liu, 
+    Tianchi Zhao and Aly Grealish for discussion, notification and 
+    inspiration.
+    
+
+
+
+
+
