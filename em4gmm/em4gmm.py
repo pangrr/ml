@@ -62,9 +62,9 @@ class Gauss:
 
     # Compute the probability of given data in this Gaussian distribution.
     def prob (self, data):
-        A = 1.0 / math.sqrt((2*math.pi)**self.nDim * linalg.det(self.cov))
-        B = -1.0/2.0 * np.dot(np.dot((data-self.mean).T, linalg.inv(self.cov)), data-self.mean)
-        return A * math.exp (B)
+        A = math.sqrt((2*math.pi)**self.nDim * linalg.det(self.cov))
+        B = - np.dot(np.dot((data-self.mean).T, linalg.inv(self.cov)), data-self.mean) / 2.0
+        return math.exp (B) / A
 
 
 
@@ -171,7 +171,6 @@ class GMM:
 
 
 
-
     # Compute and save new parameter values for all components given responsibilities. i.e. M step.
     def Mstep (self):
         for k in range (self.nComp):
@@ -248,7 +247,6 @@ class GMM:
             deno += jgauss.mix * jgauss.prob (dataPoint)
 
         kgauss = self.comp[k]
-
         return kgauss.mix * kgauss.prob (dataPoint) / deno
 
 
@@ -274,6 +272,7 @@ class GMM:
         gauss.newMean /= gauss.pop
 
 
+
     # Compute and save the new covariances for the given component.
     # Used in M step.
     def newCov (self, k):
@@ -283,6 +282,7 @@ class GMM:
             dataPoint = self.trainData.data[n]
             gauss.newCov += self.resp[n][k] * np.outer((dataPoint-gauss.newMean), (dataPoint-gauss.newMean))
         gauss.newCov /= gauss.pop
+        #print (gauss.newCov)
 
 
 
@@ -306,7 +306,8 @@ class GMM:
     def randData (self):
         select = []
         for i in range (self.nComp):
-            select.append (self.trainData.data[random.randint (0, self.trainData.nData-1)])
+            #select.append (self.trainData.data[random.randint (0, self.trainData.nData-1)])
+            select.append (self.trainData.data[i])
         return select
 
 
@@ -353,7 +354,7 @@ if __name__ == "__main__":
     trainData = Sample ("train.dat")
     devData = Sample ("dev.dat")
     print ("Done.")
-    test (trainData, devData, 1, 5, 20)
+    test (trainData, devData, 3, 3, 20)
 
 
 
