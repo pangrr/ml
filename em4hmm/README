@@ -1,0 +1,121 @@
+Name: Ran Pang
+
+Email: pangrr89@gmail.com
+
+Course: CSC446
+
+Homework:
+    Implement EM to train an HMM for whichever dataset you used for assignment 
+    7. The observation probs should be as in assignment 7: either gaussian, or 
+    two discrete distributions conditionally independent given the hidden state. 
+    Does the HMM model the data better than the original non-sequence model? 
+    What is the best number of states?
+
+
+************************       Files         ***********************************
+
+    em4gmm.py
+        Use "python em4hmm.py" to run the script.
+        
+        Modify arguments of test() in main function to assign the minimum
+        number of hidden states, the maximum number of hidden states and the 
+        number of iterations respectively.
+
+    train.dat
+        
+    dev.dat
+
+    README
+        
+    figures
+        A folder of figures of the experiment results.
+
+
+************************       Algorithm     **********************************
+
+
+    ---------------------------- EM for HMMs   ----------------------------
+
+    INPUT: train data of N data points, number of hidden states K, number of 
+           iterations.
+
+        1. Initialize the parameters of the trained HMM such that:
+           
+           K random data points are chosen to be the means of each hidden state
+           represented by a Gaussian distribution;
+           
+           Compute the covariance matrix of the train data set as the
+           covariance matrices for each Gaussian distribution;
+
+           1/K as the initial state coefficient for each state as well as the 
+           initial state transition coefficient for each pair of states.
+
+        2. For the number of iterations:
+           
+           2.1 Do forward procedure on both train data and dev data with
+           normalization.
+
+           2.2 Compute the log likelihood on both train data and dev data.
+
+           2.2 Do backward procedure on train data with normalization.
+
+           2.3 Update the conditional probability, the joint probability.
+
+           2.4 Update the initial state coefficient, the state trasition 
+           coefficient and the mean and covariance of each state.
+            
+    OUTPUT: Parameters of the trained HMM.
+
+
+
+
+***********************          Results       *********************************
+    
+    Number of hidden states from 1 to 20 were tested on 20 iterations. Log 
+    likelihood of both train data and dev data were plotted in the same figure
+    for each number of states.
+
+    Covergence:
+        In all cases, log likelihood converges within about 10 iterations. 
+        More clusters make it slower to converge than less clusters. This
+        behavior is similar to the that of the GMMs.
+
+    Likelihood:
+        The converged log likelihood on training data is about -3000. The more
+        hidden states the slightly higher the converged log likelihood. The 
+        converged log likelihood on dev data is about -320. The more hidden 
+        states the slightly higher the converged log likelihood. These behaviors
+        show no significant difference from those of GMMs. Thus the best number
+        os states is 20 in this experiment.
+        
+
+
+***********************      Interpretation    *********************************
+    
+    A few more than one hidden states can better fit the training data 
+    similar to that more features fit better the training data. Many clusters
+    may overfit the which might lead to a decreasing likelihood on dev data.
+    This is not the case in this experiment possibly due to the relatively small
+    number of states been tested.
+
+    The converged log likelihood shows no significant difference from that of 
+    GMMs in the previous assignment. This might indicate no significant 
+    sequential relationship among the data set.
+
+    During the forward and backward procedure, normalization is needed otherwise
+    the coefficients become too small to be stored in the computer.
+
+    
+*************************      References      *********************************
+
+    Pattern Recognition and Machine Learning. Christopher M. Bishop
+    Various sources of python coding instructions from the Internet
+
+    Thanks those dear classmates Haoyuan Xiao for discussion, notification 
+    and inspiration.
+    
+
+
+
+
+
